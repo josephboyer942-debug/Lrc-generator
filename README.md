@@ -83,7 +83,9 @@ python lrc_generator.py chanson.flac paroles.txt -l fr -m medium --isolate-vocal
 
 ## Éditeur (`editor.html`)
 
-1. Ouvrez `editor.html` dans votre navigateur.
+En ligne, sans rien installer : **https://josephboyer942-debug.github.io/Lrc-generator/**
+
+1. Ouvrez l'éditeur en ligne, ou `editor.html` dans votre navigateur.
 2. Déposez le fichier audio.
 3. Collez les paroles (ou ouvrez le `.lrc` produit par le script) puis **Charger les lignes**.
 4. Lancez la lecture et appuyez sur **Espace** au début de chaque ligne.
