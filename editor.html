@@ -1,0 +1,374 @@
+<title>Atelier LRC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : console à deux colonnes — sources & export à gauche, piste de paroles horodatées à droite */
+:root{
+  --bg:#f3f4f6; --panel:#ffffff; --fg:#1b1f27; --muted:#5d6675; --line:#dfe2e8;
+  --accent:#c76a00; --accent-soft:#fdebd3; --ok:#1f7a4d; --warn:#b4282f;
+  --row-active:#fff4e5;
+  --f-display:"Sora",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151b; --panel:#1a1e26; --fg:#e7e9ee; --muted:#9aa3b2; --line:#2b313c;
+  --accent:#ffa53a; --accent-soft:#3a2a14; --ok:#5fd39a; --warn:#ff7a80; --row-active:#2a2318; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151b; --panel:#1a1e26; --fg:#e7e9ee; --muted:#9aa3b2; --line:#2b313c;
+  --accent:#ffa53a; --accent-soft:#3a2a14; --ok:#5fd39a; --warn:#ff7a80; --row-active:#2a2318; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px}
+h1{font:700 1.7rem/1.1 var(--f-display);margin:0;letter-spacing:-.01em}
+h1 b{color:var(--accent)}
+header p{margin:0;color:var(--muted);max-width:60ch}
+h2{font:600 .72rem/1 var(--f-body);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 10px}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.stack{display:grid;gap:16px}
+label{font-size:.85rem;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;font:inherit;color:var(--fg);background:var(--bg);
+  border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+textarea{font:13px/1.55 var(--f-mono);resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.drop{border:1.5px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{color:var(--fg)}
+audio{width:100%;margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+button{font:500 .88rem var(--f-body);color:var(--fg);background:var(--bg);border:1px solid var(--line);
+  border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#1b1206;font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.status{font:500 .85rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.status b{color:var(--accent)}
+.keys{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin:0 0 12px;padding:0;list-style:none}
+kbd{font:600 .72rem var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--fg);background:var(--bg)}
+ol#lines{list-style:none;margin:0;padding:0;max-height:62vh;overflow:auto;border-top:1px solid var(--line)}
+ol#lines li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:10px;align-items:center;
+  padding:6px 8px;border-bottom:1px solid var(--line);cursor:pointer}
+ol#lines li.cur{box-shadow:inset 3px 0 0 var(--accent);background:var(--accent-soft)}
+ol#lines li.playing .txt{color:var(--accent);font-weight:600}
+.t{font:600 .85rem var(--f-mono);font-variant-numeric:tabular-nums;min-width:7.2ch;padding:2px 6px;border-radius:4px;
+  background:var(--bg);border:1px solid var(--line);text-align:center}
+.t.empty{color:var(--muted);font-weight:400}
+.nudge{display:flex;gap:2px}
+.nudge button{padding:2px 6px;font:500 .72rem var(--f-mono)}
+.txt{overflow-wrap:anywhere}
+.txt.blank{color:var(--muted);font-style:italic}
+.note{font-size:.82rem;color:var(--muted);margin:6px 0 0}
+.toast{min-height:1.3em;font-size:.85rem;color:var(--ok)}
+@media (prefers-reduced-motion:no-preference){ol#lines li{transition:background .12s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Atelier <b>LRC</b></h1>
+    <p>Chargez l'audio, collez les paroles, puis tapez <kbd>Espace</kbd> au début de chaque ligne pendant la lecture. Vous pouvez aussi ouvrir un .lrc généré par le script pour le corriger.</p>
+  </header>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="panel">
+        <h2>1 · Audio</h2>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choisir un fichier audio">
+          <strong>Déposez un fichier audio</strong> ou cliquez pour choisir<br><span class="note" id="audioName">MP3, WAV, FLAC, M4A, OGG</span>
+        </div>
+        <input type="file" id="audioFile" accept="audio/*" hidden>
+        <audio id="player" controls preload="metadata"></audio>
+        <div class="row" style="margin-top:8px">
+          <label for="rate">Vitesse</label>
+          <select id="rate" style="width:auto">
+            <option value="0.5">0,5×</option><option value="0.75">0,75×</option><option value="1" selected>1×</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>2 · Paroles</h2>
+        <textarea id="lyrics" rows="10" spellcheck="false" aria-label="Paroles ou contenu LRC"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button id="applyLyrics" class="primary">Charger les lignes</button>
+          <button id="openFile">Ouvrir .txt / .lrc</button>
+          <input type="file" id="textFile" accept=".txt,.lrc,text/plain" hidden>
+        </div>
+        <p class="note">Une ligne = une ligne LRC. Les horodatages déjà présents sont conservés. Les lignes <code>[Refrain]</code> sont ignorées.</p>
+      </section>
+
+      <section class="panel">
+        <h2>3 · Export</h2>
+        <div class="meta">
+          <div><label for="ti">Titre</label><input type="text" id="ti"></div>
+          <div><label for="ar">Artiste</label><input type="text" id="ar"></div>
+          <div><label for="al">Album</label><input type="text" id="al"></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label for="shift">Décaler tout (s)</label>
+          <input type="number" id="shift" step="0.1" value="0" style="width:6em">
+          <button id="applyShift">Appliquer</button>
+        </div>
+        <textarea id="out" rows="8" readonly style="margin-top:10px" aria-label="Fichier LRC généré"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button id="copy" class="primary">Copier le LRC</button>
+          <button id="download">Télécharger .lrc</button>
+        </div>
+        <div class="toast" id="toast" role="status"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0">Synchronisation</h2>
+        <span class="status" id="status"></span>
+      </div>
+      <ul class="keys">
+        <li><kbd>Espace</kbd> horodater la ligne et passer à la suivante</li>
+        <li><kbd>⌫</kbd> revenir d'une ligne</li>
+        <li><kbd>P</kbd> lecture / pause</li>
+        <li><kbd>←</kbd><kbd>→</kbd> ±2 s</li>
+        <li><kbd>↑</kbd><kbd>↓</kbd> choisir la ligne</li>
+        <li><kbd>B</kbd> insérer une ligne vide</li>
+      </ul>
+      <ol id="lines" aria-label="Lignes de paroles"></ol>
+      <p class="note">Cliquez sur un horodatage pour écouter depuis ce point. Les boutons ±0,1 s affinent une ligne.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const player = $("player"), list = $("lines");
+  let lines = [];      // {t: secondes|null, text}
+  let cur = 0;         // ligne sélectionnée
+
+  const SAMPLE = `[ti:Exemple — Néons de minuit]
+[00:02.10]Sous les néons de minuit
+[00:05.80]La ville parle tout bas
+[00:09.40]Je compte les fenêtres allumées
+[00:13.20]Et l'une d'elles, c'est toi
+[00:17.00]
+[Refrain]
+Encore une heure, encore un pas
+Le jour viendra bien assez tôt
+Encore une heure, reste là
+Le jour viendra bien assez tôt`;
+
+  // ---------- format ----------
+  const fmt = s => {
+    if (s == null || isNaN(s)) return "--:--.--";
+    const cs = Math.round(Math.max(0, s) * 100);
+    const m = Math.floor(cs / 6000), sec = Math.floor(cs % 6000 / 100), c = cs % 100;
+    return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}.${String(c).padStart(2,"0")}`;
+  };
+  const TS = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+  const toSec = (m, s, f) => +m * 60 + +s + (f ? +("0." + f) : 0);
+
+  function parse(text) {
+    const out = [], meta = {};
+    for (let raw of text.replace(/\r/g, "").split("\n")) {
+      raw = raw.trim();
+      const tag = raw.match(/^\[(ti|ar|al):(.*)\]$/i);
+      if (tag) { meta[tag[1].toLowerCase()] = tag[2].trim(); continue; }
+      if (/^\[[a-z]+:.*\]$/i.test(raw)) continue;            // autres balises
+      const stamps = [...raw.matchAll(TS)];
+      const body = raw.replace(TS, "").replace(/<\d{1,3}:\d{2}[.:]\d{1,3}>/g, "").replace(/\s+/g, " ").trim();
+      if (stamps.length) { stamps.forEach(st => out.push({ t: toSec(st[1], st[2], st[3]), text: body })); continue; }
+      if (!raw || /^(\[[^\]]*\]|\([^)]*\))$/.test(raw)) continue; // vide / [Refrain]
+      out.push({ t: null, text: body });
+    }
+    return { lines: out, meta };
+  }
+
+  function buildLrc() {
+    const head = ["ti","ar","al"].map(k => $(k).value.trim() ? `[${k}:${$(k).value.trim()}]` : null).filter(Boolean);
+    if (isFinite(player.duration)) head.push(`[length:${fmt(player.duration).slice(0,5)}]`);
+    head.push("[by:Atelier LRC]");
+    const body = lines.filter(l => l.t != null).sort((a,b) => a.t - b.t).map(l => `[${fmt(l.t)}]${l.text}`);
+    return head.join("\n") + "\n\n" + body.join("\n") + "\n";
+  }
+
+  // ---------- rendu ----------
+  function render() {
+    list.innerHTML = "";
+    lines.forEach((l, i) => {
+      const li = document.createElement("li");
+      li.dataset.i = i;
+      li.className = i === cur ? "cur" : "";
+      li.innerHTML = `<span class="t ${l.t == null ? "empty" : ""}" title="Écouter depuis ici"></span>
+        <span class="nudge"><button data-d="-0.1" aria-label="Reculer de 0,1 s">−.1</button><button data-d="0.1" aria-label="Avancer de 0,1 s">+.1</button></span>
+        <span class="txt ${l.text ? "" : "blank"}"></span>`;
+      li.querySelector(".t").textContent = fmt(l.t);
+      li.querySelector(".txt").textContent = l.text || "(ligne vide — efface l'affichage)";
+      list.appendChild(li);
+    });
+    update();
+  }
+
+  function update() {
+    const done = lines.filter(l => l.t != null).length;
+    $("status").innerHTML = `<b>${done}</b>/${lines.length} lignes · ${fmt(player.currentTime)}`;
+    $("out").value = buildLrc();
+    [...list.children].forEach((li, i) => li.classList.toggle("cur", i === cur));
+    lastPlaying = -1; [...list.children].forEach(li => li.classList.remove("playing"));
+    if (typeof highlight === "function" && player.src) highlight();
+  }
+
+  function select(i, scroll = true) {
+    cur = Math.max(0, Math.min(lines.length - 1, i));
+    update();
+    const li = list.children[cur];
+    if (scroll && li) li.scrollIntoView({ block: "nearest" });
+  }
+
+  function refreshRow(i) {
+    const li = list.children[i]; if (!li) return;
+    const t = li.querySelector(".t");
+    t.textContent = fmt(lines[i].t);
+    t.classList.toggle("empty", lines[i].t == null);
+  }
+
+  function toast(msg, warn) {
+    const el = $("toast"); el.textContent = msg; el.style.color = warn ? "var(--warn)" : "var(--ok)";
+    clearTimeout(toast.h); toast.h = setTimeout(() => el.textContent = "", 2500);
+  }
+
+  // ---------- actions ----------
+  function stamp() {
+    if (!lines.length) return;
+    if (!player.src) { toast("Chargez d'abord un fichier audio.", true); return; }
+    lines[cur].t = player.currentTime;
+    refreshRow(cur);
+    select(cur + 1);
+  }
+
+  function loadText(text) {
+    const r = parse(text);
+    lines = r.lines; cur = 0;
+    for (const k of ["ti","ar","al"]) if (r.meta[k] != null) $(k).value = r.meta[k];
+    const first = lines.findIndex(l => l.t == null);
+    cur = first < 0 ? 0 : first;
+    render(); select(cur);
+    toast(`${lines.length} lignes chargées.`);
+  }
+
+  function loadAudio(file) {
+    if (!file) return;
+    if (player.src) URL.revokeObjectURL(player.src);
+    player.src = URL.createObjectURL(file);
+    player.playbackRate = +$("rate").value;
+    $("audioName").textContent = file.name;
+    const base = file.name.replace(/\.[^.]+$/, "");
+    if (!$("ti").value || $("ti").value.startsWith("Exemple")) $("ti").value = base;
+    // repart d'une feuille propre si c'était l'exemple
+    if (lines.length && lines[0].text === "Sous les néons de minuit") lines.forEach(l => l.t = null), render(), select(0);
+  }
+
+  // ---------- événements ----------
+  $("drop").onclick = () => $("audioFile").click();
+  $("drop").onkeydown = e => { if (e.key === "Enter") $("audioFile").click(); };
+  $("audioFile").onchange = e => loadAudio(e.target.files[0]);
+  ["dragover","dragenter"].forEach(ev => $("drop").addEventListener(ev, e => { e.preventDefault(); $("drop").classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => $("drop").addEventListener(ev, () => $("drop").classList.remove("over")));
+  $("drop").addEventListener("drop", e => { e.preventDefault(); loadAudio(e.dataTransfer.files[0]); });
+  $("rate").onchange = () => player.playbackRate = +$("rate").value;
+
+  $("applyLyrics").onclick = () => loadText($("lyrics").value);
+  $("openFile").onclick = () => $("textFile").click();
+  $("textFile").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    $("lyrics").value = await f.text(); loadText($("lyrics").value);
+  };
+
+  $("applyShift").onclick = () => {
+    const d = parseFloat($("shift").value) || 0;
+    lines.forEach(l => { if (l.t != null) l.t = Math.max(0, l.t + d); });
+    render(); select(cur, false); toast(`Décalage de ${d > 0 ? "+" : ""}${d} s appliqué.`);
+  };
+
+  list.addEventListener("click", e => {
+    const li = e.target.closest("li"); if (!li) return;
+    const i = +li.dataset.i, btn = e.target.closest("button");
+    if (btn) {
+      if (lines[i].t != null) { lines[i].t = Math.max(0, lines[i].t + +btn.dataset.d); refreshRow(i); update();
+        if (player.src) { player.currentTime = Math.max(0, lines[i].t - 0.5); player.play(); } }
+      return;
+    }
+    select(i, false);
+    if (e.target.classList.contains("t") && lines[i].t != null && player.src) {
+      player.currentTime = lines[i].t; player.play();
+    }
+  });
+
+  document.addEventListener("keydown", e => {
+    const tag = e.target.tagName;
+    if (tag === "TEXTAREA" || (tag === "INPUT" && e.target.type !== "file") || tag === "SELECT") return;
+    switch (e.key) {
+      case " ": case "Enter": e.preventDefault(); stamp(); break;
+      case "Backspace": e.preventDefault(); select(cur - 1); break;
+      case "ArrowUp": e.preventDefault(); select(cur - 1); break;
+      case "ArrowDown": e.preventDefault(); select(cur + 1); break;
+      case "ArrowLeft": e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - 2); break;
+      case "ArrowRight": e.preventDefault(); player.currentTime += 2; break;
+      case "p": case "P": e.preventDefault(); player.paused ? player.play() : player.pause(); break;
+      case "b": case "B":
+        e.preventDefault();
+        lines.splice(cur, 0, { t: player.src ? player.currentTime : null, text: "" });
+        render(); select(cur + 1); break;
+    }
+  });
+
+  // surbrillance de la ligne en cours de lecture
+  let lastPlaying = -1;
+  function highlight() {
+    const now = player.currentTime;
+    let p = -1;
+    lines.forEach((l, i) => { if (l.t != null && l.t <= now && (p < 0 || l.t >= lines[p].t)) p = i; });
+    if (p !== lastPlaying) {
+      list.children[lastPlaying]?.classList.remove("playing");
+      list.children[p]?.classList.add("playing");
+      lastPlaying = p;
+    }
+    $("status").innerHTML = `<b>${lines.filter(l => l.t != null).length}</b>/${lines.length} lignes · ${fmt(now)}`;
+  }
+  player.addEventListener("timeupdate", highlight);
+  player.addEventListener("loadedmetadata", update);
+
+  $("copy").onclick = () => {
+    const txt = $("out").value;
+    navigator.clipboard?.writeText(txt).then(() => toast("LRC copié dans le presse-papiers."),
+      () => { $("out").select(); toast("Sélectionné : faites Ctrl+C / ⌘C.", true); })
+      ?? ($("out").select(), toast("Sélectionné : faites Ctrl+C / ⌘C.", true));
+  };
+  // Page hébergée sur claude.ai : passe par la capacité downloads (.lrc non autorisé → .txt)
+  let dl = null;
+  window.claude?.use?.("downloads").then(d => dl = d).catch(() => {});
+  $("download").onclick = () => {
+    const base = ($("ti").value.trim() || "paroles").replace(/[\\/:*?"<>|]/g, "_");
+    if (dl) {
+      dl.save({ filename: base + ".lrc.txt", data: $("out").value })
+        .then(() => toast("Enregistré en .txt : renommez l'extension en .lrc."))
+        .catch(e => toast(e?.code === "declined" ? "Enregistrement annulé." : "Enregistrement impossible ici : utilisez « Copier le LRC ».", true));
+      return;
+    }
+    const name = base + ".lrc";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([$("out").value], { type: "text/plain;charset=utf-8" }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    toast(`${name} téléchargé.`);
+  };
+
+  // état initial : exemple
+  $("lyrics").value = SAMPLE;
+  loadText(SAMPLE);
+  $("toast").textContent = "Exemple chargé : remplacez-le par vos paroles.";
+})();
+</script>

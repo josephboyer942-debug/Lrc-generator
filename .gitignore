@@ -1,0 +1,9 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.lrc
+*.paroles.txt
+*.mp3
+*.wav
+*.flac
+*.m4a
